@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include <pb_encode.h>
 #include <pb_decode.h>
-#include "proto/command.pb.h"
+
 #ifndef PROTOCOLBUFFERSSTREAM_H
 #define PROTOCOLBUFFERSSTREAM_H
 
