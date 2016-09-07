@@ -1,0 +1,12 @@
+{
+    "name": "ProtocolBuffersStream",
+    "keywords": "stream, pb, protocol buffers, serial, communication",
+    "description": "Send and receive objects easily over a stream",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/maxpowel/ProtocolBuffersStream"
+    },
+    "frameworks": "arduino",
+    "platforms": "atmelavr,atmelsam"
+}

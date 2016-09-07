@@ -1,0 +1,2 @@
+Generate C code from proto file
+nanopb-0.3.6-linux-x86/generator-bin/protoc --nanopb_out=. command.proto

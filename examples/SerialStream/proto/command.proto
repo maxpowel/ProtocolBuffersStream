@@ -1,0 +1,8 @@
+message Command {
+  required int32 command = 1;
+}
+
+message Response {
+  required bool success = 1;
+  required float someValue = 2;
+}
