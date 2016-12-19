@@ -10,8 +10,6 @@
 class ProtocolBuffersStream {
   private:
     Stream *stream_;
-
-    byte buffer_[200];
     /* The following static stuff are functions required by protocol buffers library
        because it expects a function
     */

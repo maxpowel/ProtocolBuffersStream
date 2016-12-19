@@ -15,11 +15,13 @@ ProtocolBuffersStream::ProtocolBuffersStream(Stream *stream){
  */
 bool ProtocolBuffersStream::callbackRead(pb_istream_t *stream, uint8_t *buf, size_t count)
 {
+
+Stream *mstream = (Stream *)stream->state;
   if(ProtocolBuffersStream::dataAvailable <= 0){
     stream->bytes_left = 0;
     return true;
   }
-  Stream *mstream = (Stream *)stream->state;
+
   size_t totalRead = mstream->readBytes(buf, count);
   ProtocolBuffersStream::dataAvailable -= totalRead;
 
@@ -34,11 +36,12 @@ bool ProtocolBuffersStream::receive(const pb_field_t fields[], void *dest_struct
   while (!stream_->available());
   size_t messageSize = stream_->read();
   ProtocolBuffersStream::dataAvailable = messageSize;
-  pb_istream_t pb_istream_ = {&callbackRead, stream_, SIZE_MAX};
+  pb_istream_t pb_istream_ = {&callbackRead, stream_, messageSize};
   bool status = pb_decode(&pb_istream_, fields, dest_struct);
-  if(!status) {
+  //bool status = true;
+  /*if(!status) {
     Serial.println(PB_GET_ERROR(&pb_istream_));
-  }
+  }*/
 
   return status;
 }
@@ -57,12 +60,11 @@ bool ProtocolBuffersStream::callbackWrite(pb_ostream_t *stream, const uint8_t *b
  */
 bool ProtocolBuffersStream::send(const pb_field_t fields[], const void *src_struct){
 
-  pb_ostream_t sizestream = {0};
-  pb_encode(&sizestream, fields, src_struct);
-  Serial.write(sizestream.bytes_written);
-  pb_ostream_t pb_stream_ = {&ProtocolBuffersStream::callbackWrite, stream_, SIZE_MAX, 0};
+  size_t payloadSize;
+  pb_get_encoded_size(&payloadSize, fields, src_struct);
+  stream_->write(payloadSize);
+  pb_ostream_t pb_stream = {&ProtocolBuffersStream::callbackWrite, stream_, payloadSize, 0};
+  return pb_encode(&pb_stream, fields, src_struct);
 
-
-  return pb_encode(&pb_stream_, fields, src_struct);
 
 }
