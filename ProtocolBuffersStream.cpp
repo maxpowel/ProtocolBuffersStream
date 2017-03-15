@@ -5,10 +5,19 @@
 
 size_t ProtocolBuffersStream::dataAvailable;
 
-ProtocolBuffersStream::ProtocolBuffersStream(Stream *stream){
+ProtocolBuffersStream::ProtocolBuffersStream(Stream *stream, unsigned int timeout){
   stream_ = stream;
+  setTimeout(timeout);
 }
 
+void ProtocolBuffersStream::flush() {
+  stream_->flush();
+}
+
+void ProtocolBuffersStream::setTimeout(unsigned int timeout) {
+  timeout_ = timeout;
+  stream_->setTimeout(timeout);
+}
 
 /**
  * Just read from serial and send it to pb library
@@ -32,18 +41,25 @@ Stream *mstream = (Stream *)stream->state;
  * Waits for a first byte which contains the payload size
  */
 bool ProtocolBuffersStream::receive(const pb_field_t fields[], void *dest_struct){
+  char messageSize;
+  size_t totalRead = stream_->readBytes(&messageSize, 1);
+  // Serial.println("ESPERANDO MENSAJE DE TAM");
+  // Serial.println((int)messageSize);
+  if(totalRead == 1) {
+    //while (!stream_->available());
+    //size_t messageSize = stream_->read();
+    ProtocolBuffersStream::dataAvailable = messageSize;
+    pb_istream_t pb_istream_ = {&callbackRead, stream_, (size_t)messageSize};
+    bool status = pb_decode(&pb_istream_, fields, dest_struct);
+    //bool status = true;
+    /*if(!status) {
+      Serial.println(PB_GET_ERROR(&pb_istream_));
+    }*/
 
-  while (!stream_->available());
-  size_t messageSize = stream_->read();
-  ProtocolBuffersStream::dataAvailable = messageSize;
-  pb_istream_t pb_istream_ = {&callbackRead, stream_, messageSize};
-  bool status = pb_decode(&pb_istream_, fields, dest_struct);
-  //bool status = true;
-  /*if(!status) {
-    Serial.println(PB_GET_ERROR(&pb_istream_));
-  }*/
-
-  return status;
+    return status;
+  } else {
+    return false;
+  }
 }
 
 /**
@@ -59,7 +75,6 @@ bool ProtocolBuffersStream::callbackWrite(pb_ostream_t *stream, const uint8_t *b
  * Get the payload size send it and encode payload
  */
 bool ProtocolBuffersStream::send(const pb_field_t fields[], const void *src_struct){
-
   size_t payloadSize;
   pb_get_encoded_size(&payloadSize, fields, src_struct);
   stream_->write(payloadSize);
